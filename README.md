@@ -4,3 +4,11 @@ Simple implementation of monocular visual odometry.
 
 ![alt text](https://github.com/markoelez/minislam/blob/master/features.png?raw=true)
 ![alt text](https://github.com/markoelez/minislam/blob/master/map.png?raw=true)
+
+##### todo:
+- get pangolin to work
+- cleanup code
+- add tests (maybe)
+- parameterize camera intrinsics
+- add graph optimization (maybe)
+- test out other feature detectors
