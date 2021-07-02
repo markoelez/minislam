@@ -42,7 +42,6 @@ class VisualOdometry:
         if frame_id == 0:
             self.draw_img = cv2.cvtColor(self.cur_img, cv2.COLOR_GRAY2RGB)
         else:
-            #self.cur_kps, self.ref_kps = self.feature_manager.get_matches(self.cur_kps,
             self.cur_matched_kps, self.ref_matched_kps = self.feature_manager.get_matches(self.cur_kps,
                                                                                           self.ref_kps,
                                                                                           self.cur_des,
@@ -98,7 +97,6 @@ class VisualOdometry:
 
     def draw_features(self, img): 
         draw_img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
-        #for p1, p2 in zip(self.ref_kps, self.cur_kps):
         for p1, p2 in zip(self.ref_matched_kps, self.cur_matched_kps):
             x1, y1 = map(int, p1)
             x2, y2 = map(int, p2)

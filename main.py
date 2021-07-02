@@ -17,7 +17,7 @@ def fit_point(img_shape, pt):
     w, h = img_shape
     x, y, z = pt
 
-    return (int(x + w // 2), int(h + z))
+    return (int(x + w // 2), int(h - (h // 4) + z))
 
 
 if __name__ == '__main__':
@@ -28,8 +28,9 @@ if __name__ == '__main__':
 
     camera = Camera(W, H, fxy, fxy, W // 2, H // 2)
 
-    loader = VideoLoader('videos/kitti1.mp4')
-    #loader = ImageLoader('videos/one')
+    #loader = VideoLoader('videos/kitti1.mp4')
+    #loader = VideoLoader('videos/kitti_datasets/kitti00/video.mp4')
+    loader = VideoLoader('videos/kitti_datasets/kitti06/video.mp4')
 
     display2D = Display(W, H)
 
@@ -37,22 +38,27 @@ if __name__ == '__main__':
     
     tw, th = 800, 800
     mapd = np.zeros((tw, th, 3))
+
+    draw = True
     
     for i, img in enumerate(loader):
         img = cv2.resize(img, (W, H))
 
         vo.process_frame(img, i)
         
-        display2D.paint(vo.draw_img)
+        if draw:
+            display2D.paint(vo.draw_img)
         
         if i > 1:
             x, y = fit_point((tw, th), vo.translations[-1])
+            
+            if draw:
+                cv2.circle(mapd, (x, y), 2, (0, 255, 0), 1)
 
-            cv2.circle(mapd, (x, y), 3, (0, 255, 0), 1)
-
-            tmp = mapd.copy()
-            cv2.putText(tmp, f'x: {x} y: {y}', (20, 40), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 1, 8)
+                tmp = mapd.copy()
+                cv2.putText(tmp, f'x: {x} y: {y}', (20, 40), cv2.FONT_HERSHEY_PLAIN, 2, (255, 255, 255), 2, 8)
+            
+                cv2.imshow('Trajectory', tmp)
         
-            cv2.imshow('Trajectory', tmp)
-        
-    cv2.destroyAllWindows()
+    if draw:
+        cv2.destroyAllWindows()

@@ -8,8 +8,8 @@ class FeatureManager:
 
     def detect(self, frame):
         self.feature_extractor = cv2.ORB_create()
-        pts = cv2.goodFeaturesToTrack(frame, 3000, qualityLevel=0.01, minDistance=3)
-        return [cv2.KeyPoint(x=p[0][0], y=p[0][1], _size=20) for p in pts]
+        pts = cv2.goodFeaturesToTrack(frame, 2000, qualityLevel=0.01, minDistance=3)
+        return [cv2.KeyPoint(x=p[0][0], y=p[0][1], _size=5) for p in pts]
 
     def compute(self, frame, kps):
         kps, des = self.feature_extractor.compute(frame, kps)

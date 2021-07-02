@@ -1,15 +1,6 @@
 #!/usr/bin/env python3
-
-import sys
-sys.path.append('lib')
-import pypangolin as pangolin
-import cv2
 import pygame
-
-from multiprocessing import Process, Queue
 from pygame.locals import DOUBLEBUF
-import OpenGL.GL as gl
-import numpy as np
 
 
 class Display:
@@ -29,6 +20,7 @@ class Display:
 
 
 from multiprocessing import Process, Queue
+import sys
 sys.path.append('lib')
 import pypangolin as pangolin
 import OpenGL.GL as gl
