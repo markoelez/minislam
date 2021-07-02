@@ -1,64 +1,6 @@
 import cv2
 import numpy as np
-
-
-class Camera:
-    def __init__(self, width, height, fx, fy, cx, cy):
-        self.width = width
-        self.height = height
-        self.fx = fx
-        self.fy = fy
-        self.cx = cx
-        self.cy = cy
-
-        self.K = np.array([[fx, 0,cx],
-                           [ 0,fy,cy],
-                           [ 0, 0, 1]])
-
-        self.Kinv = np.linalg.inv(self.K)
-
-    def __str__(self):
-        return np.array2string(self.K)
-
-
-class FeatureManager:
-    def __init__(self):
-        self.feature_extractor = cv2.ORB_create()
-
-    def detect(self, frame):
-        self.feature_extractor = cv2.ORB_create()
-        pts = cv2.goodFeaturesToTrack(frame, 3000, qualityLevel=0.01, minDistance=3)
-        return [cv2.KeyPoint(x=p[0][0], y=p[0][1], _size=20) for p in pts]
-
-    def compute(self, frame, kps):
-        kps, des = self.feature_extractor.compute(frame, kps)
-        self.kps, self.des = np.array(kps), np.array(des)
-        return (self.kps, self.des)
-
-    def detect_and_compute(self, frame):
-        kps = self.detect(frame)
-        return self.compute(frame, kps)
-
-    def get_matches(self, cur_kps, ref_kps, cur_des, ref_des):
-        bf = cv2.BFMatcher(cv2.NORM_HAMMING)
-        matches = bf.knnMatch(ref_des, cur_des, k=2)
-
-        # apply ratio test
-        good = []
-        for m, n in matches:
-            if m.distance < 0.75 * n.distance:
-                good.append(m)
-        
-        assert len(good) > 8
-
-        # return matching keypoints
-        ref_mask = np.array([x.queryIdx for x in good])
-        cur_mask = np.array([x.trainIdx for x in good])
-
-        ref_pts = np.array([x.pt for x in ref_kps[ref_mask]])
-        cur_pts = np.array([x.pt for x in cur_kps[cur_mask]])
-
-        return (ref_pts, cur_pts)
+from feature_manager import FeatureManager
 
 
 class VisualOdometry:
@@ -83,7 +25,7 @@ class VisualOdometry:
         self.cur_matched_kps = None
         self.ref_matched_kps = None
 
-        self.trajectory = []
+        self.translations = []
 
         self.cur_R = np.eye(3, 3)
         self.cur_t = np.zeros((3, 1))
@@ -116,7 +58,7 @@ class VisualOdometry:
             self.cur_t = self.cur_t + self.cur_R.dot(t) 
             self.cur_R = self.cur_R.dot(R)
 
-            self.trajectory.append(self.cur_t)
+            self.translations.append(self.cur_t)
             
             '''
             print(self.cur_R)

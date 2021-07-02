@@ -1,4 +1,5 @@
 import numpy as np
+from helpers import add_ones
 
 
 class Camera:
@@ -29,10 +30,4 @@ class Camera:
     def denormalize_pts(self, pts):
         h = add_ones(pts)
         return np.dot(self.Kinv, h.T).T[:, 0:2]
-
-def add_ones(x):
-    if len(x.shape) == 1:
-        return np.array([x[0], x[1], 1])
-    else:
-        return np.concatenate([x, np.ones((x.shape[0], 1))], axis=1)
 
