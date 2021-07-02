@@ -7,8 +7,10 @@ class Camera:
         self.height = height
         self.fx = fx
         self.fy = fy
+        self.f = fx # assume fx == fy
         self.cx = cx
         self.cy = cy
+        self.pp = (cx, cy)
 
         self.K = np.array([[fx, 0,cx],
                            [ 0,fy,cy],
@@ -25,4 +27,12 @@ class Camera:
     
     # 2D image --> 3D world
     def denormalize_pts(self, pts):
-        pass
+        h = add_ones(pts)
+        return np.dot(self.Kinv, h.T).T[:, 0:2]
+
+def add_ones(x):
+    if len(x.shape) == 1:
+        return np.array([x[0], x[1], 1])
+    else:
+        return np.concatenate([x, np.ones((x.shape[0], 1))], axis=1)
+

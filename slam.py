@@ -12,6 +12,14 @@ from visual_odometry import VisualOdometry
 window_name = 'window'
 
 
+# transform point to display nicely in frame
+def fit_point(img_shape, pt):
+    w, h = img_shape
+    x, y, z = pt
+
+    return (int(x + w // 2), int(h + z))
+
+
 if __name__ == '__main__':
     
     fxy = 270 # focal length: fx = fy
@@ -20,23 +28,32 @@ if __name__ == '__main__':
 
     camera = Camera(W, H, fxy, fxy, W // 2, H // 2)
 
-    loader = VideoLoader('videos/test.mp4')
+    #loader = VideoLoader('videos/kitti1.mp4')
+    loader = VideoLoader('/Users/marko/fun/twitchslam/videos/test_kitti984.mp4')
     #loader = ImageLoader('videos/one')
 
     display2D = Display(W, H)
 
     vo = VisualOdometry(camera)
     
+    tw, th = 800, 800
+    trajectory = np.zeros((tw, th, 3))
+    
     for i, img in enumerate(loader):
         img = cv2.resize(img, (W, H))
 
         vo.process_frame(img, i)
         
-        #print('-' * 50)
-        #print(img.shape)
-        #print(vo.draw_img.shape)
-        #print(vo.cur_img.shape)
-        #print('-' * 50)
         display2D.paint(vo.draw_img)
         
-    cv2.destroyAllWindows()
+        if i > 1:
+            x, y = fit_point((tw, th), vo.trajectory[-1])
+
+            cv2.circle(trajectory, (x, y), 3, (0, 255, 0), 1)
+
+            traj = trajectory.copy()
+            cv2.putText(traj, f'x: {x} y: {y}', (20, 40), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 1, 8)
+        
+            cv2.imshow('Trajectory', traj)
+        
+    #cv2.destroyAllWindows()
