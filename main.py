@@ -50,9 +50,9 @@ if __name__ == '__main__':
 
             cv2.circle(mapd, (x, y), 3, (0, 255, 0), 1)
 
-            mapd = mapd.copy()
-            cv2.putText(mapd, f'x: {x} y: {y}', (20, 40), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 1, 8)
+            tmp = mapd.copy()
+            cv2.putText(tmp, f'x: {x} y: {y}', (20, 40), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 1, 8)
         
-            cv2.imshow('Trajectory', mapd)
+            cv2.imshow('Trajectory', tmp)
         
     cv2.destroyAllWindows()
