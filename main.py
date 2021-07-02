@@ -22,15 +22,17 @@ def fit_point(img_shape, pt):
 
 if __name__ == '__main__':
     
-    fxy = 270 # focal length: fx = fy
-    W = 1920 // 2
-    H = 1080 // 2
+    fxy = 718.856 # focal length: fx = fy
+    cx, cy = 607.2,  185.2
+
+    W = 1241
+    H = 376
 
     camera = Camera(W, H, fxy, fxy, W // 2, H // 2)
 
     #loader = VideoLoader('videos/kitti1.mp4')
-    #loader = VideoLoader('videos/kitti_datasets/kitti00/video.mp4')
-    loader = VideoLoader('videos/kitti_datasets/kitti06/video.mp4')
+    loader = VideoLoader('videos/kitti_datasets/kitti00/video.mp4')
+    #loader = VideoLoader('videos/kitti_datasets/kitti06/video.mp4')
 
     display2D = Display(W, H)
 

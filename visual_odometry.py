@@ -8,6 +8,8 @@ class VisualOdometry:
         self.camera = camera
         self.feature_manager = FeatureManager()
 
+        self.scale = 0.8
+
         self.cur_frame_id = None
 
         self.poses = []
@@ -54,7 +56,7 @@ class VisualOdometry:
 
             self.draw_img = self.draw_features(self.cur_img)
 
-            self.cur_t = self.cur_t + self.cur_R.dot(t) 
+            self.cur_t = self.cur_t + (self.scale * self.cur_R.dot(t))
             self.cur_R = self.cur_R.dot(R)
 
             self.translations.append(self.cur_t)
@@ -88,7 +90,8 @@ class VisualOdometry:
                                            pp=(0., 0.),
                                            method=cv2.RANSAC,
                                            prob=0.999,
-                                           threshold=0.0003)
+                                           #threshold=0.0003)
+                                           threshold=0.003)
 
         _, R, t, mask = cv2.recoverPose(E, cur_kps, ref_kps, focal=1, pp=(0., 0.))
 
@@ -100,7 +103,7 @@ class VisualOdometry:
         for p1, p2 in zip(self.ref_matched_kps, self.cur_matched_kps):
             x1, y1 = map(int, p1)
             x2, y2 = map(int, p2)
-            cv2.circle(draw_img, (x1, y1), 1, (0, 255, 0), 1)
-            cv2.circle(draw_img, (x2, y2), 1, (0, 255, 0), 1)
-            cv2.line(draw_img, (x1, y1), (x2, y2), (0, 0, 255), 1)
+            cv2.circle(draw_img, (x1, y1), 1, (255, 0, 0), 1)
+            cv2.circle(draw_img, (x2, y2), 1, (255, 0, 0), 1)
+            cv2.line(draw_img, (x1, y1), (x2, y2), (0, 255, 0), 1)
         return draw_img
