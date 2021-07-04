@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 import cv2
 import sys
+import os
+import configparser
+import argparse
 import numpy as np
 np.set_printoptions(suppress=True)
 from dataset import ImageLoader, VideoLoader
@@ -10,32 +13,19 @@ from camera import Camera
 from visual_odometry import VisualOdometry
 
 
-window_name = 'window'
-
+CONFIG_PATH = 'config.ini'
 
 # transform point to display nicely in frame
 def fit_point(img_shape, pt):
     w, h = img_shape
     x, y, z = pt
-
     return (int(x + w // 2), int(h - (h // 4) + z))
 
 
-if __name__ == '__main__':
-    
-    fxy = 718.856 # focal length: fx = fy
-    cx, cy = 607.2,  185.2
+def main(camera, data_loader):
+    width, height = camera.width, camera.height
 
-    W = 1241
-    H = 376
-
-    camera = Camera(W, H, fxy, fxy, W // 2, H // 2)
-
-    #loader = VideoLoader('videos/kitti1.mp4')
-    #loader = VideoLoader('videos/kitti_datasets/kitti00/video.mp4')
-    loader = VideoLoader('videos/kitti_datasets/kitti06/video.mp4')
-
-    display2D = Display2D(W, H)
+    display2D = Display2D(width, height)
     display3D = Display3D()
 
     vo = VisualOdometry(camera)
@@ -45,8 +35,8 @@ if __name__ == '__main__':
 
     draw = True
     
-    for i, img in enumerate(loader):
-        img = cv2.resize(img, (W, H))
+    for i, img in enumerate(data_loader):
+        img = cv2.resize(img, (width, height))
 
         vo.process_frame(img, i)
         
@@ -68,3 +58,39 @@ if __name__ == '__main__':
         
     if draw:
         cv2.destroyAllWindows()
+
+if __name__ == '__main__':
+    config = configparser.ConfigParser()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config_section',
+                        metavar='config_section',
+                        type=str,
+                        help='The associated config section in the config.ini file')
+    args = vars(parser.parse_args())
+    section = args['config_section']
+
+    config.read(CONFIG_PATH)
+
+    params = config[section]
+
+    # focal length
+    fx, fy = float(params['fx']), float(params['fy'])
+
+    # principle point
+    cx, cy = float(params['cx']), float(params['cy'])
+
+    # camera dimensions
+    w, h = int(params['w']), int(params['h'])
+
+    camera = Camera(w, h, fx, fy, cx, cy)
+    
+    path = params['path']
+    if os.path.isdir(path):
+        loader = ImageLoader(path)
+    elif os.path.isfile(path):
+        loader = VideoLoader(path)
+
+    assert loader
+
+    main(camera, loader)
+

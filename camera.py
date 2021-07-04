@@ -4,18 +4,14 @@ from helpers import add_ones
 
 class Camera:
     def __init__(self, width, height, fx, fy, cx, cy):
-        self.width = width
-        self.height = height
-        self.fx = fx
-        self.fy = fy
-        self.f = fx # assume fx == fy
-        self.cx = cx
-        self.cy = cy
+        self.width, self.height = width, height
+        self.fx, self.fy = fx, fy
+        self.cx, self.cy = cx, cy
         self.pp = (cx, cy)
 
-        self.K = np.array([[fx, 0,cx],
-                           [ 0,fy,cy],
-                           [ 0, 0, 1]])
+        self.K = np.array([[ fx, 0,  cx ],
+                           [ 0,  fy, cy ],
+                           [ 0,  0,  1  ]])
 
         self.Kinv = np.linalg.inv(self.K)
 
