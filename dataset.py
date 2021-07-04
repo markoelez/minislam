@@ -3,7 +3,7 @@ import os
 import cv2
 from abc import abstractmethod
 from collections import deque
-from display import Display
+from display2d import Display
 
 
 class DataLoader():

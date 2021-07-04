@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 from feature_manager import FeatureManager
+from helpers import pose_Rt
 
 
 class VisualOdometry:
@@ -11,8 +12,6 @@ class VisualOdometry:
         self.scale = 0.8
 
         self.cur_frame_id = None
-
-        self.poses = []
 
         self.cur_img = None
         self.ref_img = None
@@ -28,6 +27,7 @@ class VisualOdometry:
         self.ref_matched_kps = None
 
         self.translations = []
+        self.poses = []
 
         self.cur_R = np.eye(3, 3)
         self.cur_t = np.zeros((3, 1))
@@ -60,6 +60,9 @@ class VisualOdometry:
             self.cur_R = self.cur_R.dot(R)
 
             self.translations.append(self.cur_t)
+            pose = pose_Rt(self.cur_R, self.cur_t)
+            print(pose)
+            self.poses.append(pose)
             
             '''
             print(self.cur_R)

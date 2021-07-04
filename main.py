@@ -4,7 +4,8 @@ import sys
 import numpy as np
 np.set_printoptions(suppress=True)
 from dataset import ImageLoader, VideoLoader
-from display import Display, Display3D
+from display2d import Display as Display2D
+from display3d import Display as Display3D
 from camera import Camera
 from visual_odometry import VisualOdometry
 
@@ -34,7 +35,8 @@ if __name__ == '__main__':
     loader = VideoLoader('videos/kitti_datasets/kitti00/video.mp4')
     #loader = VideoLoader('videos/kitti_datasets/kitti06/video.mp4')
 
-    display2D = Display(W, H)
+    display2D = Display2D(W, H)
+    display3D = Display3D()
 
     vo = VisualOdometry(camera)
     
@@ -61,6 +63,8 @@ if __name__ == '__main__':
                 cv2.putText(tmp, f'x: {x} y: {y}', (20, 40), cv2.FONT_HERSHEY_PLAIN, 2, (255, 255, 255), 2, 8)
             
                 cv2.imshow('Trajectory', tmp)
+                
+                display3D.update(vo)
         
     if draw:
         cv2.destroyAllWindows()
