@@ -32,8 +32,8 @@ if __name__ == '__main__':
     camera = Camera(W, H, fxy, fxy, W // 2, H // 2)
 
     #loader = VideoLoader('videos/kitti1.mp4')
-    loader = VideoLoader('videos/kitti_datasets/kitti00/video.mp4')
-    #loader = VideoLoader('videos/kitti_datasets/kitti06/video.mp4')
+    #loader = VideoLoader('videos/kitti_datasets/kitti00/video.mp4')
+    loader = VideoLoader('videos/kitti_datasets/kitti06/video.mp4')
 
     display2D = Display2D(W, H)
     display3D = Display3D()
