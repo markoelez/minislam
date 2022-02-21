@@ -15,9 +15,8 @@ Add new configurations to `config.ini` file as new sections. The `path` paramete
 
 todo
 -----
-- get pangolin to work
 - cleanup code
-- add tests (maybe)
+- add tests
 - parameterize camera intrinsics
-- add graph optimization (maybe)
+- add graph optimization
 - test out other feature detectors
