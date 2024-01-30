@@ -60,12 +60,6 @@ class VisualOdometry:
             pose = pose_Rt(self.cur_R, self.cur_t)
             self.poses.append(pose)
 
-            '''
-            print(self.cur_R)
-            print(self.cur_t)
-            print('=' * 30)
-            '''
-
         # update reference
         self.ref_img = self.cur_img
         self.ref_kps = self.cur_kps

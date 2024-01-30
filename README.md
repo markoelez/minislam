@@ -26,6 +26,7 @@ using your own data:
 
 
 #### Todo
+- add type checking
 - add tests
 - add graph optimization
 - test out other feature detectors

@@ -22,10 +22,8 @@ class DataLoader():
 class ImageLoader(DataLoader):
     def __init__(self, path: str):
         super().__init__(path)
-
         self.images = deque(sorted([x for x in os.listdir(path) if x.endswith('.png')]))
         assert self.images
-
         self.height, self.width, _ = cv2.imread(os.path.join(self.path, self.images[-1])).shape
 
     def __next__(self):
@@ -41,9 +39,7 @@ class ImageLoader(DataLoader):
 class VideoLoader(DataLoader):
     def __init__(self, path: str):
         super().__init__(path)
-
         self.cap = cv2.VideoCapture(path)
-
         self.width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 

@@ -11,7 +11,6 @@ class Display:
 
     def paint(self, img):
         for _ in pygame.event.get(): pass
-
         pygame.surfarray.blit_array(self.surface, img.swapaxes(0, 1))
         self.screen.blit(self.surface, (0, 0))
         pygame.display.flip()
