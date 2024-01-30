@@ -1,5 +1,8 @@
 # minislam
 
+[![CI](https://github.com/markoelez/minislam/actions/workflows/ci.yaml/badge.svg)](https://github.com/markoelez/minislam/actions/workflows/ci.yaml)
+
+
 Simple implementation of monocular visual odometry.
 
 ![alt text](https://github.com/markoelez/minislam/blob/master/img/example.png?raw=true)
@@ -22,7 +25,7 @@ using your own data:
 4. run with `PYTHONPATH=. python minislam/main.py --dataset=[your_dataset_name]`
 
 
-#### todo
+#### Todo
 - add tests
 - add graph optimization
 - test out other feature detectors
