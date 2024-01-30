@@ -1,22 +1,28 @@
-#### minislam
+# minislam
 
 Simple implementation of monocular visual odometry.
 
-![alt text](https://github.com/markoelez/minislam/blob/master/example.png?raw=true)
-![alt text](https://github.com/markoelez/minislam/blob/master/example_two.png?raw=true)
+![alt text](https://github.com/markoelez/minislam/blob/master/img/example.png?raw=true)
+![alt text](https://github.com/markoelez/minislam/blob/master/img/example_two.png?raw=true)
 
 
-usage
------
-example:
-`./main.py --config_section=kitti2`
+### Usage
 
-Add new configurations to `config.ini` file as new sections. The `path` parameter can either be a directory of images or a video file.
+run the following for a quick example:
+```sh
+PYTHONPATH=. python minislam/main.py --dataset=test
+```
 
-todo
------
-- cleanup code
+using your own data:
+1. start by doing one of the following:
+    - download a sequence of images: https://www.cvlibs.net/datasets/kitti/raw_data.php
+    - download an MP4 video
+2. move the dataset into the `eval/` directory
+3. add dataset metadata to the `config.yaml` file
+4. run with `PYTHONPATH=. python minislam/main.py --dataset=[your_dataset_name]`
+
+
+#### todo
 - add tests
-- parameterize camera intrinsics
 - add graph optimization
 - test out other feature detectors

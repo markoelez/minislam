@@ -1,0 +1,9 @@
+datasets:
+  test:
+    path: eval/test/
+    fx: 718.856
+    fy: 718.856
+    cx: 607.2
+    cy: 185.2
+    w: 1241
+    h: 376

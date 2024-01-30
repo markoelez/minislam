@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: lint
+        name: lint
+        entry: env PYTHONPATH="." python -m pylint minislam/
+        language: system
+        always_run: true
+        pass_filenames: false
