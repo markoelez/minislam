@@ -22,7 +22,7 @@ using your own data:
     - download an MP4 video
 2. move the dataset into the `eval/` directory
 3. add dataset metadata to the `config.yaml` file
-4. run with `PYTHONPATH=. python minislam/main.py --dataset=[your_dataset_name]`
+4. run with `uv run main --dataset=[your_dataset_name]`
 
 
 #### Todo
