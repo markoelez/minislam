@@ -1,0 +1,36 @@
+line-length = 140
+indent-width = 2
+target-version = "py313"
+
+[lint.isort]
+# known-first-party = ["app_name"]
+length-sort = true
+combine-as-imports = true
+split-on-trailing-comma = true
+relative-imports-order = "closest-to-furthest"
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+
+[lint]
+select = [
+  "T100", # Check for debugger imports (like breakpoint, pdb)
+  "F401", # Check for unused imports
+  "I",    # Imports sorting
+  "F841", # Check for unused variables
+]
+ignore = [
+  "E501", # Ignore line too long error
+  "E703", # Allow one liners like `for i in range(5): print(i)`
+  "E701", # Allow multiple statements on one line
+  "E702", # Allow multiple statements on one line with semicolon
+  "E731", # Allow lambda assignments
+  "E722", # Allow bare except
+  "E741", # Allow ambiguous variable names
+]
+exclude = [
+  "**/*.ipynb", # Jupyter notebooks
+]
+
+[format]
+exclude = [
+  "**/*.ipynb", # Jupyter notebooks
+]

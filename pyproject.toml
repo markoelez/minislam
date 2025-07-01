@@ -1,0 +1,21 @@
+[project]
+name = "minislam"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Marko Elez", email = "markoelez7@gmail.com" }
+]
+requires-python = ">=3.11.6"
+dependencies = [
+    "opencv-python>=4.11.0.86",
+    "pygame>=2.6.1",
+    "pyyaml>=6.0.2",
+]
+
+[project.scripts]
+main = "minislam:main.main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
