@@ -1,7 +1,5 @@
 # minislam
 
-[![CI](https://github.com/markoelez/minislam/actions/workflows/ci.yaml/badge.svg)](https://github.com/markoelez/minislam/actions/workflows/ci.yaml)
-
 
 Simple implementation of monocular visual odometry.
 
