@@ -13,7 +13,7 @@ Rewrite here: https://github.com/markoelez/minislam2.
 
 run the following for a quick example:
 ```sh
-PYTHONPATH=. python minislam/main.py --dataset=test
+uv run main
 ```
 
 using your own data:
