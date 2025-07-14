@@ -1,17 +1,15 @@
-import sys
 from multiprocessing import Queue, Process
 
 import numpy as np
+import pygame
 import OpenGL.GL as gl
-import pypangolin as pangolin
-
-sys.path.append("lib")
+import OpenGL.GLU as glu
 
 
 class VisualOdometryState:
   def __init__(self):
-    self.poses = []
-    self.translations = []
+    self.poses = np.array([])
+    self.translations = np.array([])
 
 
 class Display:
@@ -25,67 +23,142 @@ class Display:
   def viewer_thread(self, q):
     width, height = 1024, 550
     self.viewer_init(width, height)
-    while not pangolin.ShouldQuit():
+
+    clock = pygame.time.Clock()
+    running = True
+
+    while running:
+      for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+          running = False
+        elif event.type == pygame.KEYDOWN:
+          if event.key == pygame.K_ESCAPE:
+            running = False
+
       self.viewer_refresh(q)
+      pygame.display.flip()
+      clock.tick(60)
+
+    pygame.quit()
     print("Quitting viewer...")
 
   def viewer_init(self, w, h):
-    pangolin.CreateWindowAndBind("Map Viewer", w, h)
+    pygame.init()
+    pygame.display.set_mode((w, h), pygame.DOUBLEBUF | pygame.OPENGL)
+    pygame.display.set_caption("Map Viewer")
+
     gl.glEnable(gl.GL_DEPTH_TEST)
+    gl.glDepthFunc(gl.GL_LESS)
 
-    viewpoint_x = 0
-    viewpoint_y = 50
-    viewpoint_z = -80
-    viewpoint_f = 1000
+    gl.glMatrixMode(gl.GL_PROJECTION)
+    gl.glLoadIdentity()
+    glu.gluPerspective(45, w / h, 0.1, 5000.0)
 
-    self.proj = pangolin.ProjectionMatrix(w, h, viewpoint_f, viewpoint_f, w // 2, h // 2, 0.1, 5000)
-    self.look_view = pangolin.ModelViewLookAt(viewpoint_x, viewpoint_y, viewpoint_z, 0, 0, 0, 0, -1, 0)
-    self.scam = pangolin.OpenGlRenderState(self.proj, self.look_view)
-    self.handler = pangolin.Handler3D(self.scam)
+    gl.glMatrixMode(gl.GL_MODELVIEW)
+    gl.glLoadIdentity()
 
-    self.dcam = pangolin.CreateDisplay()
-    self.dcam.SetBounds(0.0, 1.0, 180 / w, 1.0, -w / h)
-    self.dcam.SetHandler(pangolin.Handler3D(self.scam))
+    self.camera_x = 0
+    self.camera_y = 50
+    self.camera_z = -80
+
+    self.target_x = 0
+    self.target_y = 0
+    self.target_z = 0
+
+    self.up_x = 0
+    self.up_y = -1
+    self.up_z = 0
 
     self.pointSize = 3
+    self.current_pose = np.eye(4)
 
-    self.Twc = pangolin.OpenGlMatrix()
-    self.Twc.SetIdentity()
+  def draw_camera_frustum(self, pose, scale=0.1):
+    gl.glPushMatrix()
+
+    gl.glMultMatrixf(pose.T.flatten())
+
+    vertices = np.array(
+      [
+        [0, 0, 0],
+        [-scale, -scale, scale],
+        [scale, -scale, scale],
+        [scale, scale, scale],
+        [-scale, scale, scale],
+      ]
+    )
+
+    gl.glBegin(gl.GL_LINES)
+    for i in range(1, 5):
+      gl.glVertex3f(*vertices[0])
+      gl.glVertex3f(*vertices[i])
+    gl.glEnd()
+
+    gl.glBegin(gl.GL_LINE_LOOP)
+    for i in range(1, 5):
+      gl.glVertex3f(*vertices[i])
+    gl.glEnd()
+
+    gl.glPopMatrix()
+
+  def draw_line_strip(self, points):
+    if len(points) < 2:
+      return
+
+    gl.glBegin(gl.GL_LINE_STRIP)
+    for point in points:
+      gl.glVertex3f(point[0], point[1], point[2])
+    gl.glEnd()
 
   def viewer_refresh(self, q):
     while not q.empty():
       self.state = q.get()
 
-    self.scam.Follow(self.Twc, True)
+    if self.state is not None and self.state.poses.shape[0] >= 1:
+      current_pose = self.state.poses[-1]
+      self.current_pose = current_pose
 
-    gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
+      pos = current_pose[:3, 3]
+
+      self.camera_x = pos[0] - 10
+      self.camera_y = pos[1] + 20
+      self.camera_z = pos[2] - 30
+
+    gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)  # type: ignore
     gl.glClearColor(0.0, 0.0, 0.0, 1.0)
 
-    self.dcam.Activate(self.scam)
+    gl.glMatrixMode(gl.GL_MODELVIEW)
+    gl.glLoadIdentity()
+
+    glu.gluLookAt(
+      self.camera_x,
+      self.camera_y,
+      self.camera_z,
+      self.target_x,
+      self.target_y,
+      self.target_z,
+      self.up_x,
+      self.up_y,
+      self.up_z,
+    )
 
     if self.state is not None:
       if self.state.poses.shape[0] >= 2:
-        # draw previous poses
+        # Draw previous poses
         gl.glColor3f(0.0, 1.0, 0.0)
-        pangolin.DrawCameras(self.state.poses[:-1])
+        for pose in self.state.poses[:-1]:
+          self.draw_camera_frustum(pose)
 
       if self.state.poses.shape[0] >= 1:
-        # draw current pose
+        # Draw current pose
         gl.glColor3f(1.0, 0.0, 0.0)
-        current_pose = self.state.poses[-1:]
-        pangolin.DrawCameras(current_pose)
-        self.update_Twc(current_pose[0])
+        current_pose = self.state.poses[-1]
+        self.draw_camera_frustum(current_pose)
 
       if self.state.translations.shape[0] != 0:
-        # draw estimated translations
         gl.glPointSize(self.pointSize)
         gl.glColor3f(0.0, 0.0, 1.0)
-        pangolin.DrawLine(self.state.translations)
-
-    pangolin.FinishFrame()
-
-  def update_Twc(self, pose):
-    self.Twc.m = pose
+        gl.glLineWidth(2.0)
+        self.draw_line_strip(self.state.translations)
 
   def update(self, vo):
     if self.q is None:

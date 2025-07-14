@@ -9,9 +9,8 @@ import numpy as np
 from minislam.camera import Camera
 from minislam.dataset import DataLoader, ImageLoader, VideoLoader
 from minislam.odometry import VisualOdometry
-
-# from minislam.display3d import Display as Display3D
 from minislam.display2d import Display as Display2D
+from minislam.display3d import Display as Display3D
 
 np.set_printoptions(suppress=True)
 
@@ -33,7 +32,7 @@ def _main(camera: Camera, data_loader: DataLoader):
   width, height = camera.width, camera.height
 
   display2D = Display2D(width, height)
-  # display3D = Display3D()
+  display3D = Display3D()
 
   vo = VisualOdometry(camera)
 
@@ -61,7 +60,7 @@ def _main(camera: Camera, data_loader: DataLoader):
 
         cv2.imshow("Trajectory", tmp)
 
-        # display3D.update(vo)
+        display3D.update(vo)
 
   if draw:
     cv2.destroyAllWindows()
@@ -69,7 +68,7 @@ def _main(camera: Camera, data_loader: DataLoader):
 
 def main():
   parser = argparse.ArgumentParser()
-  parser.add_argument("--dataset", metavar="dataset", type=str, help="The target dataset in config.yaml", default="test")
+  parser.add_argument("--dataset", metavar="dataset", type=str, help="The target dataset in config.yaml", default="test2")
   args = vars(parser.parse_args())
   cfg = parse_cfg("config.yaml", args["dataset"])
 

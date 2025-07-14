@@ -1,6 +1,5 @@
 # minislam
 
-
 Simple implementation of monocular visual odometry.
 
 Rewrite here: https://github.com/markoelez/minislam2.
