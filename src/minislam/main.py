@@ -8,17 +8,11 @@ import numpy as np
 
 from minislam.camera import Camera
 from minislam.dataset import DataLoader, ImageLoader, VideoLoader
+from minislam.display import Display
 from minislam.odometry import VisualOdometry
-from minislam.display2d import Display as Display2D
-from minislam.display3d import Display as Display3D
+from minislam.display3d import Display3D
 
 np.set_printoptions(suppress=True)
-
-
-def fit_point(img_shape: tuple[float, float], pt: tuple[float, float, float]) -> tuple[float, float]:
-  w, h = img_shape
-  x, _, z = pt
-  return (int(x + w // 2), int(h - (h // 4) + z))
 
 
 def parse_cfg(path: str, dataset: str) -> dict:
@@ -31,39 +25,29 @@ def parse_cfg(path: str, dataset: str) -> dict:
 def _main(camera: Camera, data_loader: DataLoader):
   width, height = camera.width, camera.height
 
-  display2D = Display2D(width, height)
-  display3D = Display3D()
+  # 2D display (OpenCV) - features + top-down trajectory
+  display = Display(width, height)
+
+  # 3D display (pygame/OpenGL)
+  display3d = Display3D(width=800, height=600)
 
   vo = VisualOdometry(camera)
 
-  tw, th = 800, 800
-  mapd = np.zeros((tw, th, 3))
-
-  draw = True
-
   for i, img in enumerate(data_loader):
     img = cv2.resize(img, (width, height))
-
     vo.process_frame(img, i)
 
-    if draw:
-      display2D.paint(vo.draw_img)
+    # Update 2D display
+    key = display.show(vo)
+    if key == 27:  # ESC to quit
+      break
 
-    if i > 1:
-      x, y = fit_point((tw, th), vo.translations[-1])
+    # Update 3D display
+    if not display3d.update(vo):
+      break
 
-      if draw:
-        cv2.circle(mapd, (x, y), 2, (0, 255, 0), 1)  # type: ignore
-
-        tmp = mapd.copy()
-        cv2.putText(tmp, f"x: {x} y: {y}", (20, 40), cv2.FONT_HERSHEY_PLAIN, 2, (255, 255, 255), 2, 8)
-
-        cv2.imshow("Trajectory", tmp)
-
-        display3D.update(vo)
-
-  if draw:
-    cv2.destroyAllWindows()
+  cv2.destroyAllWindows()
+  display3d.close()
 
 
 def main():
