@@ -32,14 +32,19 @@ class VisualOdometry:
     self.cur_R = np.eye(3, 3)
     self.cur_t = np.zeros((3, 1))
 
-    # Loop closure detection
+    # Loop closure detection with smart keyframe selection
     self.enable_loop_closure = enable_loop_closure
     self.loop_closure_detector = LoopClosureDetector(
       min_frame_gap=50,
       similarity_threshold=0.75,
       min_inliers=50,
       min_inlier_ratio=0.3,
-      keyframe_interval=5,
+      # Smart keyframe selection parameters
+      min_keyframe_gap=5,
+      min_parallax=15.0,  # pixels - minimum feature displacement
+      max_parallax=100.0,  # pixels - force keyframe if exceeded
+      min_tracked_ratio=0.5,  # force keyframe if tracking drops below 50%
+      min_features=50,  # force keyframe if features drop below this
     )
     self.last_loop_closure: LoopClosureCandidate | None = None
 
@@ -148,3 +153,8 @@ class VisualOdometry:
   def keyframes(self):
     """Get all stored keyframes."""
     return self.loop_closure_detector.keyframes
+
+  @property
+  def num_keyframes(self) -> int:
+    """Get the number of keyframes."""
+    return self.loop_closure_detector.num_keyframes

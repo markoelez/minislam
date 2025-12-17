@@ -32,6 +32,16 @@ class LoopClosureCandidate:
   relative_pose: np.ndarray
 
 
+@dataclass
+class KeyframeDecision:
+  """Information about keyframe selection decision."""
+
+  should_add: bool
+  reason: str
+  parallax: float = 0.0
+  tracked_ratio: float = 1.0
+
+
 class LoopClosureDetector:
   """Detects loop closures using descriptor matching and geometric verification."""
 
@@ -41,7 +51,12 @@ class LoopClosureDetector:
     similarity_threshold: float = 0.75,
     min_inliers: int = 50,
     min_inlier_ratio: float = 0.3,
-    keyframe_interval: int = 5,
+    # Keyframe selection parameters
+    min_keyframe_gap: int = 5,
+    min_parallax: float = 15.0,
+    max_parallax: float = 100.0,
+    min_tracked_ratio: float = 0.5,
+    min_features: int = 50,
   ):
     """
     Initialize loop closure detector.
@@ -51,27 +66,152 @@ class LoopClosureDetector:
       similarity_threshold: Minimum descriptor similarity score (0-1)
       min_inliers: Minimum inlier matches for valid loop closure
       min_inlier_ratio: Minimum ratio of inliers to total matches
-      keyframe_interval: Add keyframe every N frames
+      min_keyframe_gap: Minimum frames between keyframes
+      min_parallax: Minimum median feature displacement (pixels) for new keyframe
+      max_parallax: Maximum parallax before forcing keyframe (prevents drift)
+      min_tracked_ratio: Minimum ratio of tracked features before forcing keyframe
+      min_features: Minimum features before forcing keyframe
     """
     self.min_frame_gap = min_frame_gap
     self.similarity_threshold = similarity_threshold
     self.min_inliers = min_inliers
     self.min_inlier_ratio = min_inlier_ratio
-    self.keyframe_interval = keyframe_interval
+
+    # Keyframe selection
+    self.min_keyframe_gap = min_keyframe_gap
+    self.min_parallax = min_parallax
+    self.max_parallax = max_parallax
+    self.min_tracked_ratio = min_tracked_ratio
+    self.min_features = min_features
 
     self.keyframes: list[Keyframe] = []
     self.loop_closures: list[LoopClosureCandidate] = []
+    self.last_keyframe_id: int = -1
 
     self.matcher = cv2.BFMatcher(cv2.NORM_HAMMING)
 
-  def should_add_keyframe(self, frame_id: int) -> bool:
-    """Determine if this frame should be stored as a keyframe."""
-    return frame_id % self.keyframe_interval == 0
+  def compute_parallax(
+    self,
+    cur_keypoints: np.ndarray,
+    cur_descriptors: np.ndarray,
+    ref_keypoints: np.ndarray,
+    ref_descriptors: np.ndarray,
+  ) -> tuple[float, int, int]:
+    """
+    Compute parallax (median feature displacement) between current frame and reference.
+
+    Returns:
+      (median_parallax, num_matches, num_ref_features)
+    """
+    if len(cur_descriptors) < 8 or len(ref_descriptors) < 8:
+      return 0.0, 0, len(ref_descriptors)
+
+    try:
+      matches = self.matcher.knnMatch(cur_descriptors, ref_descriptors, k=2)
+    except cv2.error:
+      return 0.0, 0, len(ref_descriptors)
+
+    # Apply ratio test
+    good_matches = []
+    for match_pair in matches:
+      if len(match_pair) == 2:
+        m, n = match_pair
+        if m.distance < 0.75 * n.distance:
+          good_matches.append(m)
+
+    if len(good_matches) < 8:
+      return 0.0, len(good_matches), len(ref_descriptors)
+
+    # Compute displacements
+    displacements = []
+    for m in good_matches:
+      pt1 = cur_keypoints[m.queryIdx].pt
+      pt2 = ref_keypoints[m.trainIdx].pt
+      dist = np.sqrt((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2)
+      displacements.append(dist)
+
+    median_parallax = float(np.median(displacements))
+    return median_parallax, len(good_matches), len(ref_descriptors)
+
+  def should_add_keyframe(
+    self,
+    frame_id: int,
+    keypoints: np.ndarray,
+    descriptors: np.ndarray,
+  ) -> KeyframeDecision:
+    """
+    Determine if this frame should be stored as a keyframe using smart criteria.
+
+    Criteria:
+    1. Minimum frame gap since last keyframe
+    2. Sufficient parallax (feature displacement)
+    3. Tracking quality (not losing too many features)
+    """
+    # First keyframe
+    if not self.keyframes:
+      return KeyframeDecision(should_add=True, reason="first_keyframe")
+
+    # Check minimum frame gap
+    frames_since_keyframe = frame_id - self.last_keyframe_id
+    if frames_since_keyframe < self.min_keyframe_gap:
+      return KeyframeDecision(should_add=False, reason="too_soon")
+
+    # Get last keyframe for comparison
+    last_kf = self.keyframes[-1]
+
+    # Compute parallax against last keyframe
+    parallax, num_matches, num_ref = self.compute_parallax(keypoints, descriptors, last_kf.keypoints, last_kf.descriptors)
+
+    tracked_ratio = num_matches / max(num_ref, 1)
+
+    # Check if we're losing too many features (tracking failure)
+    if len(keypoints) < self.min_features:
+      return KeyframeDecision(
+        should_add=True,
+        reason="low_features",
+        parallax=parallax,
+        tracked_ratio=tracked_ratio,
+      )
+
+    # Check tracking ratio
+    if tracked_ratio < self.min_tracked_ratio:
+      return KeyframeDecision(
+        should_add=True,
+        reason="low_tracking",
+        parallax=parallax,
+        tracked_ratio=tracked_ratio,
+      )
+
+    # Check if parallax is too high (force keyframe to prevent drift)
+    if parallax > self.max_parallax:
+      return KeyframeDecision(
+        should_add=True,
+        reason="high_parallax",
+        parallax=parallax,
+        tracked_ratio=tracked_ratio,
+      )
+
+    # Check if we have sufficient parallax for good triangulation
+    if parallax >= self.min_parallax:
+      return KeyframeDecision(
+        should_add=True,
+        reason="sufficient_parallax",
+        parallax=parallax,
+        tracked_ratio=tracked_ratio,
+      )
+
+    return KeyframeDecision(
+      should_add=False,
+      reason="insufficient_parallax",
+      parallax=parallax,
+      tracked_ratio=tracked_ratio,
+    )
 
   def add_keyframe(self, frame_id: int, pose: np.ndarray, keypoints: np.ndarray, descriptors: np.ndarray) -> None:
     """Add a new keyframe to the database."""
     kf = Keyframe(frame_id=frame_id, pose=pose.copy(), keypoints=keypoints.copy(), descriptors=descriptors.copy())
     self.keyframes.append(kf)
+    self.last_keyframe_id = frame_id
 
   def compute_similarity(self, desc1: np.ndarray, desc2: np.ndarray) -> float:
     """
@@ -241,11 +381,12 @@ class LoopClosureDetector:
     loop_closure = None
 
     # Check for loop closure (only if we have enough keyframes)
-    if len(self.keyframes) > self.min_frame_gap // self.keyframe_interval:
+    if len(self.keyframes) > self.min_frame_gap // self.min_keyframe_gap:
       loop_closure = self.detect(frame_id, pose, keypoints, descriptors)
 
-    # Add keyframe if needed
-    if self.should_add_keyframe(frame_id):
+    # Smart keyframe selection
+    decision = self.should_add_keyframe(frame_id, keypoints, descriptors)
+    if decision.should_add:
       self.add_keyframe(frame_id, pose, keypoints, descriptors)
 
     return loop_closure
@@ -253,3 +394,8 @@ class LoopClosureDetector:
   def get_loop_closure_pairs(self) -> list[tuple[int, int]]:
     """Get list of (frame_id, frame_id) pairs for all detected loop closures."""
     return [(lc.query_frame_id, lc.match_frame_id) for lc in self.loop_closures]
+
+  @property
+  def num_keyframes(self) -> int:
+    """Get the number of keyframes."""
+    return len(self.keyframes)

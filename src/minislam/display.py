@@ -163,9 +163,13 @@ class Display:
       frame_text = f"Frame: {len(self.all_translations)}"
       self._draw_label(map_display, frame_text, (10, 75), 0.45, color=(150, 150, 150))
 
+    # Show keyframe and loop closure count
+    kf_text = f"Keyframes: {vo.num_keyframes}"
+    self._draw_label(map_display, kf_text, (10, 100), 0.45, color=(80, 255, 80))
+
     if self.loop_closures:
       lc_text = f"Loops: {len(self.loop_closures)}"
-      self._draw_label(map_display, lc_text, (10, 100), 0.45, color=self.loop_closure_color)
+      self._draw_label(map_display, lc_text, (10, 125), 0.45, color=self.loop_closure_color)
 
     return np.hstack([feature_img, map_display])
 
