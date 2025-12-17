@@ -3,10 +3,11 @@ import numpy as np
 
 from minislam.util import pose_Rt
 from minislam.features import FeatureManager
+from minislam.loop_closure import LoopClosureDetector, LoopClosureCandidate
 
 
 class VisualOdometry:
-  def __init__(self, camera):
+  def __init__(self, camera, enable_loop_closure: bool = True):
     self.camera = camera
     self.feature_manager = FeatureManager()
 
@@ -30,6 +31,17 @@ class VisualOdometry:
 
     self.cur_R = np.eye(3, 3)
     self.cur_t = np.zeros((3, 1))
+
+    # Loop closure detection
+    self.enable_loop_closure = enable_loop_closure
+    self.loop_closure_detector = LoopClosureDetector(
+      min_frame_gap=50,
+      similarity_threshold=0.75,
+      min_inliers=50,
+      min_inlier_ratio=0.3,
+      keyframe_interval=5,
+    )
+    self.last_loop_closure: LoopClosureCandidate | None = None
 
   def process_frame(self, img, frame_id):
     # setup
@@ -57,6 +69,22 @@ class VisualOdometry:
       self.translations.append(self.cur_t)
       pose = pose_Rt(self.cur_R, self.cur_t)
       self.poses.append(pose)
+
+      # Loop closure detection
+      if self.enable_loop_closure:
+        self.last_loop_closure = self.loop_closure_detector.process_frame(
+          frame_id=frame_id,
+          pose=pose,
+          keypoints=self.cur_kps,
+          descriptors=self.cur_des,
+        )
+
+        if self.last_loop_closure is not None:
+          print(
+            f"[Loop Closure] Detected! Frame {self.last_loop_closure.query_frame_id} "
+            f"matches frame {self.last_loop_closure.match_frame_id} "
+            f"({self.last_loop_closure.num_inliers} inliers)"
+          )
 
     # update reference
     self.ref_img = self.cur_img
@@ -96,4 +124,27 @@ class VisualOdometry:
       cv2.circle(draw_img, (x1, y1), 1, (255, 0, 0), 1)
       cv2.circle(draw_img, (x2, y2), 1, (255, 0, 0), 1)
       cv2.line(draw_img, (x1, y1), (x2, y2), (0, 255, 0), 1)
+
+    # Draw loop closure indicator
+    if self.last_loop_closure is not None:
+      cv2.putText(
+        draw_img,
+        f"LOOP CLOSURE: {self.last_loop_closure.match_frame_id}",
+        (10, 30),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.7,
+        (0, 255, 255),
+        2,
+      )
+
     return draw_img
+
+  @property
+  def loop_closures(self) -> list[tuple[int, int]]:
+    """Get all detected loop closure pairs."""
+    return self.loop_closure_detector.get_loop_closure_pairs()
+
+  @property
+  def keyframes(self):
+    """Get all stored keyframes."""
+    return self.loop_closure_detector.keyframes

@@ -2,9 +2,15 @@
 
 [![CI](https://github.com/markoelez/minislam/actions/workflows/ci.yml/badge.svg)](https://github.com/markoelez/minislam/actions/workflows/ci.yml)
 
-Simple implementation of monocular visual odometry.
+Simple implementation of monocular visual odometry with loop closure detection.
 
 Rewrite here: https://github.com/markoelez/minislam2.
+
+### Features
+- ORB feature detection and matching
+- Essential matrix decomposition for pose estimation
+- **Loop closure detection** - detects when revisiting previously seen locations
+- Real-time 3D visualization with loop closure visualization (yellow lines)
 
 ![alt text](https://github.com/markoelez/minislam/blob/master/img/example.png?raw=true)
 ![alt text](https://github.com/markoelez/minislam/blob/master/img/example_two.png?raw=true)
@@ -46,5 +52,5 @@ uvx ty check
 
 #### Todo
 - add tests
-- add graph optimization
-- test out other feature detectors
+- add pose graph optimization (correct drift using loop closures)
+- test out other feature detectors (SIFT, SuperPoint)

@@ -10,6 +10,7 @@ class VisualOdometryState:
   def __init__(self):
     self.poses = np.array([])
     self.translations = np.array([])
+    self.loop_closures: list[tuple[int, int]] = []
 
 
 class Display:
@@ -109,6 +110,13 @@ class Display:
       gl.glVertex3f(point[0], point[1], point[2])
     gl.glEnd()
 
+  def draw_loop_closure(self, pos1, pos2):
+    """Draw a line connecting two loop closure positions."""
+    gl.glBegin(gl.GL_LINES)
+    gl.glVertex3f(pos1[0], pos1[1], pos1[2])
+    gl.glVertex3f(pos2[0], pos2[1], pos2[2])
+    gl.glEnd()
+
   def viewer_refresh(self, q):
     while not q.empty():
       self.state = q.get()
@@ -160,6 +168,21 @@ class Display:
         gl.glLineWidth(2.0)
         self.draw_line_strip(self.state.translations)
 
+      # Draw loop closures as yellow lines
+      if self.state.loop_closures and self.state.translations.shape[0] > 0:
+        gl.glColor3f(1.0, 1.0, 0.0)  # Yellow for loop closures
+        gl.glLineWidth(3.0)
+
+        for query_frame, match_frame in self.state.loop_closures:
+          # Frame indices are offset by 1 from translations array (frame 0 has no translation)
+          query_idx = query_frame - 1
+          match_idx = match_frame - 1
+
+          if 0 <= query_idx < len(self.state.translations) and 0 <= match_idx < len(self.state.translations):
+            pos1 = self.state.translations[query_idx]
+            pos2 = self.state.translations[match_idx]
+            self.draw_loop_closure(pos1, pos2)
+
   def update(self, vo):
     if self.q is None:
       return
@@ -167,4 +190,5 @@ class Display:
     state = VisualOdometryState()
     state.poses = np.array(vo.poses)
     state.translations = np.array(vo.translations).reshape(-1, 3)
+    state.loop_closures = vo.loop_closures
     self.q.put(state)
