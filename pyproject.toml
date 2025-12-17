@@ -25,5 +25,5 @@ build-backend = "hatchling.build"
 python-version = "3.11"
 
 [tool.ty.rules]
-# Start with lenient settings, can be made stricter over time
-# See: https://docs.astral.sh/ty/reference/rules/
+# Ignore unresolved imports for third-party packages (cv2, pygame, etc. are hard to install in CI)
+unresolved-import = "ignore"
