@@ -24,8 +24,25 @@ using your own data:
 4. run with `uv run main --dataset=[your_dataset_name]`
 
 
+### Development
+
+Install pre-commit hooks:
+```sh
+uvx pre-commit install
+```
+
+Run linting and formatting:
+```sh
+uvx ruff check .     # linting
+uvx ruff format .    # formatting
+```
+
+Run type checking:
+```sh
+uvx ty check
+```
+
 #### Todo
-- add type checking
 - add tests
 - add graph optimization
 - test out other feature detectors
