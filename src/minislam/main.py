@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#!/src/minislam/main.py
 import os
 import argparse
 
