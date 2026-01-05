@@ -4,7 +4,7 @@
 
 Simple implementation of monocular visual odometry with loop closure detection.
 
-Rewrite here: https://github.com/markoelez/minislam2.
+Rust version here: https://github.com/markoelez/minislam2.
 
 ### Features
 - ORB feature detection and matching
