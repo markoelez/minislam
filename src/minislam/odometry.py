@@ -112,14 +112,13 @@ class VisualOdometry:
         pp=(0.0, 0.0),
         method=cv2.RANSAC,
         prob=0.999,
-        # threshold=0.0003)
         threshold=0.003,
       )
 
     _, R, t, mask = cv2.recoverPose(E, cur_kps, ref_kps, focal=1, pp=(0.0, 0.0))  # type: ignore
 
-    mask = [i for i, v in enumerate(mask) if v > 0]
-    return R, t, mask
+    inlier_indices = np.where(mask.ravel() > 0)[0]
+    return R, t, inlier_indices
 
   def draw_features(self, img):
     draw_img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)

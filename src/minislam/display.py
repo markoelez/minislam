@@ -59,7 +59,9 @@ class Display:
 
   def _mouse_callback(self, event, x, y, flags, param):
     """Handle mouse events for 3D view interaction."""
-    in_3d_view = self.view3d_x <= x < self.view3d_x + self.view3d_width and self.view3d_y <= y < self.view3d_y + self.view3d_height
+    x_in_bounds = self.view3d_x <= x < self.view3d_x + self.view3d_width
+    y_in_bounds = self.view3d_y <= y < self.view3d_y + self.view3d_height
+    in_3d_view = x_in_bounds and y_in_bounds
 
     if event == cv2.EVENT_LBUTTONDOWN:
       if in_3d_view:
@@ -217,9 +219,9 @@ class Display:
         length = max(1, int(np.sqrt(dx * dx + dy * dy)))
         offset = length // 6
 
-        # Control point for curve
-        ctrl_x = mid_x - int(dy * offset / length) if length > 0 else mid_x
-        ctrl_y = mid_y + int(dx * offset / length) if length > 0 else mid_y
+        # Control point for curve (length is guaranteed >= 1)
+        ctrl_x = mid_x - int(dy * offset / length)
+        ctrl_y = mid_y + int(dx * offset / length)
 
         # Draw bezier-like curve with line segments
         prev = p1

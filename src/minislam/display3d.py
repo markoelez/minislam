@@ -437,14 +437,19 @@ class Display3D:
 
     return image
 
+  def _should_quit(self, event) -> bool:
+    """Check if an event indicates the application should quit."""
+    if event.type == pygame.QUIT:
+      return True
+    if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+      return True
+    return False
+
   def update(self, vo) -> bool:
     """Update and render the 3D view (legacy interface)."""
     for event in pygame.event.get():
-      if event.type == pygame.QUIT:
+      if self._should_quit(event):
         return False
-      elif event.type == pygame.KEYDOWN:
-        if event.key == pygame.K_ESCAPE:
-          return False
 
     self.render(vo)
     pygame.display.flip()
@@ -453,11 +458,8 @@ class Display3D:
   def process_events(self) -> bool:
     """Process pygame events. Returns False if should quit."""
     for event in pygame.event.get():
-      if event.type == pygame.QUIT:
+      if self._should_quit(event):
         return False
-      elif event.type == pygame.KEYDOWN:
-        if event.key == pygame.K_ESCAPE:
-          return False
     return True
 
   def close(self):

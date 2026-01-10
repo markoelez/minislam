@@ -7,7 +7,6 @@ class FeatureManager:
     self.feature_extractor = cv2.ORB_create()  # type: ignore
 
   def detect(self, frame):
-    self.feature_extractor = cv2.ORB_create()  # type: ignore
     pts = cv2.goodFeaturesToTrack(frame, 2000, qualityLevel=0.01, minDistance=3)
     return [cv2.KeyPoint(x=p[0][0], y=p[0][1], size=5) for p in pts]
 

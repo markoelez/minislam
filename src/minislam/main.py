@@ -131,8 +131,8 @@ def run_slam(
     # Type narrowing - we know these are not None after the check above
     assert width is not None and height is not None and fx is not None and fy is not None
 
-    cx = cx if cx is not None else width / 2
-    cy = cy if cy is not None else height / 2
+    cx = width / 2 if cx is None else cx
+    cy = height / 2 if cy is None else cy
     source_path = path
 
   else:
@@ -140,8 +140,7 @@ def run_slam(
     cfg = load_config(config_path)
     datasets = cfg.get("datasets", {})
 
-    if not dataset:
-      dataset = "test2"  # default
+    dataset = dataset or "test2"
 
     if dataset not in datasets:
       print_error(f"Dataset '{dataset}' not found in {config_path}")
@@ -150,12 +149,14 @@ def run_slam(
 
     ds = datasets[dataset]
     source_path = ds["path"]
-    width = width if width is not None else int(ds["w"])
-    height = height if height is not None else int(ds["h"])
-    fx = fx if fx is not None else float(ds["fx"])
-    fy = fy if fy is not None else float(ds["fy"])
-    cx = cx if cx is not None else float(ds.get("cx", width / 2))
-    cy = cy if cy is not None else float(ds.get("cy", height / 2))
+
+    # Use provided values or fall back to dataset config
+    width = int(ds["w"]) if width is None else width
+    height = int(ds["h"]) if height is None else height
+    fx = float(ds["fx"]) if fx is None else fx
+    fy = float(ds["fy"]) if fy is None else fy
+    cx = float(ds.get("cx", width / 2)) if cx is None else cx
+    cy = float(ds.get("cy", height / 2)) if cy is None else cy
 
   # At this point, all values are guaranteed to be set
   assert width is not None and height is not None
